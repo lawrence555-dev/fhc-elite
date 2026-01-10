@@ -28,12 +28,18 @@ const INITIAL_STOCKS = [
   { id: "5880", name: "合庫金", price: 24.1, diff: 0.1, change: 0.42, isUp: true, category: "官股" as const, pbValue: 1.48, pbPercentile: 74 },
 ];
 
-// Generate fake chip data
-const generateChipData = () => {
+// Generate fake chip data with seed for uniqueness
+const generateChipData = (seed: number) => {
+  // Simple pseudo-random generator based on seed
+  const seededRandom = (s: number) => {
+    const x = Math.sin(s) * 10000;
+    return x - Math.floor(x);
+  };
+
   return Array.from({ length: 15 }, (_, i) => ({
     date: `01/${i + 1}`,
-    institutional: Math.floor((Math.random() - 0.4) * 10000),
-    government: Math.floor((Math.random() - 0.3) * 5000),
+    institutional: Math.floor((seededRandom(seed + i) - 0.4) * 10000),
+    government: Math.floor((seededRandom(seed + i + 100) - 0.3) * 5000),
   }));
 };
 
@@ -77,7 +83,7 @@ export default function DashboardPage() {
       let currentStocks = INITIAL_STOCKS.map(s => ({
         ...s,
         data: generateData(s.price),
-        chipData: generateChipData()
+        chipData: generateChipData(parseInt(s.id))
       }));
       setStocks(currentStocks);
 
@@ -265,12 +271,18 @@ export default function DashboardPage() {
 
                     <div className="grid grid-cols-2 gap-4">
                       <div className="p-4 bg-white/5 rounded-2xl border border-white/5">
-                        <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1">三大法人</p>
-                        <p className="text-lg font-black text-blue-400 font-mono tracking-tighter">+12,504 <span className="text-[10px] text-slate-600 font-bold ml-1">張</span></p>
+                        <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1">三大法人 (15D)</p>
+                        <p className="text-lg font-black text-blue-400 font-mono tracking-tighter">
+                          {selectedStock.chipData.reduce((acc, curr) => acc + curr.institutional, 0).toLocaleString()}
+                          <span className="text-[10px] text-slate-600 font-bold ml-1">張</span>
+                        </p>
                       </div>
                       <div className="p-4 bg-white/5 rounded-2xl border border-white/5">
-                        <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1">官股行庫</p>
-                        <p className="text-lg font-black text-purple-400 font-mono tracking-tighter">+4,821 <span className="text-[10px] text-slate-600 font-bold ml-1">張</span></p>
+                        <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1">官股行庫 (15D)</p>
+                        <p className="text-lg font-black text-purple-400 font-mono tracking-tighter">
+                          {selectedStock.chipData.reduce((acc, curr) => acc + curr.government, 0).toLocaleString()}
+                          <span className="text-[10px] text-slate-600 font-bold ml-1">張</span>
+                        </p>
                       </div>
                     </div>
 
@@ -307,10 +319,13 @@ export default function DashboardPage() {
                   <div className="mt-auto space-y-4">
                     <div className="flex justify-between items-center px-2">
                       <span className="text-xs font-black text-slate-400 uppercase tracking-widest">散戶 FOMO 評分</span>
-                      <span className="text-xs font-black text-fall font-mono">24/100 (低)</span>
+                      <span className="text-xs font-black text-fall font-mono">
+                        {Math.abs(parseInt(selectedStock.id) % 100)}/100
+                        {Math.abs(parseInt(selectedStock.id) % 100) > 70 ? " (極高)" : Math.abs(parseInt(selectedStock.id) % 100) > 30 ? " (中)" : " (低)"}
+                      </span>
                     </div>
                     <div className="w-full h-2 bg-slate-800 rounded-full overflow-hidden">
-                      <div className="h-full bg-fall w-[24%]" />
+                      <div className="h-full bg-fall" style={{ width: `${Math.abs(parseInt(selectedStock.id) % 100)}%` }} />
                     </div>
                     <Link href="/subscription" className="w-full">
                       <button className="w-full py-4 bg-rise text-white rounded-xl font-black shadow-lg shadow-rise/20 hover:scale-[1.02] active:scale-95 transition-all">
