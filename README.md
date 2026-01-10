@@ -1,48 +1,36 @@
-# 金融監控儀表板 (Financial Monitor) 📈
+This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
 
-這是一個基於 **React + Vite** 開發的即時金融監控應用程式，旨在提供直觀、即時的股市與新聞資訊整合體驗。
+## Getting Started
 
-## ✨ 核心功能
+First, run the development server:
 
-- **即時股價追蹤**：整合真實市場數據，提供流暢的股價即時報價顯示。
-- **Google 新聞整合**：動態串接 Google 新聞，提供最相關且即時的財經議題。
-- **互動式趨勢圖表**：使用 Recharts 打造流暢的股價歷史趨勢圖，支援多種技術指標視覺化。
-- **強弱勢股分析**：自動計算並排序市場中的強勢與弱勢個股。
-- **深色模式優化**：專為金融交易設計的深色介面，提升視覺舒適度與專業質感。
-
-## 🚀 快速開始
-
-### 1. 安裝依賴
-```bash
-npm install
-```
-
-### 2. 本機開發啟動
 ```bash
 npm run dev
+# or
+yarn dev
+# or
+pnpm dev
+# or
+bun dev
 ```
 
-### 3. 專案建置 (Production)
-```bash
-npm run build
-```
+Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
 
-## 🛠️ 技術棧
+You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
 
-- **前端框架**: React 18
-- **建置工具**: Vite
-- **CSS 框架**: Tailwind CSS
-- **圖表庫**: Recharts
-- **圖示**: Lucide React
-- **資料處理**: Axios
+This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
 
-## 📂 專案結構
+## Learn More
 
-- `src/features`: 核心邏輯元件 (新聞、圖表、清單)
-- `src/services`: 資料抓取與處理邏輯 (Stock API, News API)
-- `src/components`: 通用 UI 組件
-- `src/services/priceHistoryStore.js`: 歷史價格數據管理
+To learn more about Next.js, take a look at the following resources:
 
----
+- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
+- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
 
-由 **Antigravity Pro** 驅動開發 🚀
+You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+
+## Deploy on Vercel
+
+The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+
+Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
