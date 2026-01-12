@@ -34,6 +34,7 @@ export default function TaxPage() {
     const [mounted, setMounted] = useState(false);
     const [selectedId, setSelectedId] = useState("2881"); // 預設富邦金
     const [shares, setShares] = useState<number>(10000); // 預設 10 張
+    const [userTaxRate, setUserTaxRate] = useState<number>(0.05); // 預設用戶稅率 5%
     const [livePrices, setLivePrices] = useState<Record<string, number>>({});
     const [scenarios, setScenarios] = useState<any[]>([]);
     const [isLoading, setIsLoading] = useState(true);
@@ -64,9 +65,15 @@ export default function TaxPage() {
         try {
             const res = await fetch("/api/tax/scenarios");
             const data = await res.json();
-            setScenarios(data);
+            if (Array.isArray(data)) {
+                setScenarios(data);
+            } else {
+                console.error("Scenarios data is not an array:", data);
+                setScenarios([]);
+            }
         } catch (error) {
             console.error("Failed to fetch scenarios:", error);
+            setScenarios([]);
         }
     };
 
@@ -124,6 +131,11 @@ export default function TaxPage() {
     const taxCredit = Math.min(totalDividend * TAX_RATE, TAX_LIMIT);
     const netDividend = totalDividend - nhiPremium;
     const dividendYield = selectedStock.price > 0 ? (selectedStock.dividend / selectedStock.price) * 100 : 0;
+
+    // 所得稅負擔 (合併計稅模式)
+    const incomeTaxBurden = totalDividend * userTaxRate;
+    const netReturnWithTax = netDividend - incomeTaxBurden + taxCredit;
+    const taxSavingEfficiency = ((taxCredit - incomeTaxBurden) / totalDividend) * 100;
 
     if (!mounted) return null;
 
@@ -193,6 +205,29 @@ export default function TaxPage() {
                                             </button>
                                         ))}
                                     </div>
+                                </div>
+
+                                <div>
+                                    <label className="text-[12px] font-black text-slate-500 uppercase tracking-[0.2em] mb-4 block">3. 您的所得稅率級距</label>
+                                    <div className="grid grid-cols-5 gap-2">
+                                        {[0.05, 0.12, 0.2, 0.3, 0.4].map(rate => (
+                                            <button
+                                                key={rate}
+                                                onClick={() => setUserTaxRate(rate)}
+                                                className={cn(
+                                                    "py-3 rounded-xl text-[12px] font-black transition-all border",
+                                                    userTaxRate === rate
+                                                        ? "bg-blue-500 border-blue-500 text-white shadow-lg shadow-blue-500/20"
+                                                        : "bg-white/5 border-white/5 text-slate-400 hover:border-white/20 hover:text-white"
+                                                )}
+                                            >
+                                                {rate * 100}%
+                                            </button>
+                                        ))}
+                                    </div>
+                                    <p className="text-[10px] text-slate-500 mt-3 font-medium">
+                                        💡 系統將根據此稅率計算合併申報時的負擔與抵減。
+                                    </p>
                                 </div>
 
                                 <div className="pt-8 border-t border-white/5">
@@ -314,7 +349,7 @@ export default function TaxPage() {
                             </div>
                         </div>
 
-                        {scenarios.length === 0 ? (
+                        {scenarios.length === 0 || !Array.isArray(scenarios) ? (
                             <div className="glass p-20 flex flex-col items-center justify-center border-dashed border-white/10 text-center">
                                 <div className="w-20 h-20 rounded-full bg-white/5 flex items-center justify-center text-slate-600 mb-6">
                                     <Calculator size={40} />
@@ -323,7 +358,7 @@ export default function TaxPage() {
                             </div>
                         ) : (
                             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-                                {scenarios.map((s, idx) => (
+                                {scenarios.map((s: any, idx) => (
                                     <motion.div
                                         key={s.id}
                                         initial={{ opacity: 0, scale: 0.9 }}
@@ -339,8 +374,10 @@ export default function TaxPage() {
                                         </button>
                                         <div className="flex justify-between items-start mb-6">
                                             <div>
-                                                <h4 className="text-2xl font-black text-white">{s.stockName}</h4>
-                                                <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest">{s.stockId} • {s.shares.toLocaleString()} 股</span>
+                                                <h4 className="text-2xl font-black text-white">{s.stockName || "未命名標的"}</h4>
+                                                <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest">
+                                                    {s.stockId || "0000"} • {(s.shares || 0).toLocaleString()} 股
+                                                </span>
                                             </div>
                                             <div className="text-right">
                                                 <span className="text-[10px] font-black text-slate-400 block uppercase">稅後實領</span>
@@ -385,6 +422,64 @@ export default function TaxPage() {
                                 ))}
                             </div>
                         )}
+                    </section>
+                    {/* 會計師節稅策略面板 - 多級距增強版 */}
+                    <section className="glass p-10 bg-[#0f172a] border-white/10 ring-1 ring-white/5 relative group">
+                        <div className="flex items-center gap-5 mb-8">
+                            <div className="w-10 h-10 bg-fall/20 rounded-xl flex items-center justify-center text-fall">
+                                <TrendingUp size={24} />
+                            </div>
+                            <h3 className="text-2xl font-black text-white tracking-widest uppercase italic">節稅導航 (Professional Insights)</h3>
+                        </div>
+                        <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 relative z-10">
+                            <div className="space-y-6">
+                                <h4 className="text-sm font-black text-slate-300 flex items-center gap-3">
+                                    <div className="w-2 h-2 rounded-full bg-fall shadow-[0_0_8px_rgba(251,113,133,0.5)]" />
+                                    您所選的所得稅率級距分析 ({userTaxRate * 100}%)
+                                </h4>
+                                <div className="space-y-4">
+                                    <div className="flex justify-between items-center text-sm">
+                                        <span className="text-slate-500 font-bold">預估應繳稅額 (本筆配息)</span>
+                                        <span className="text-white font-mono">{formatCurrency(incomeTaxBurden)}</span>
+                                    </div>
+                                    <div className="flex justify-between items-center text-sm">
+                                        <span className="text-slate-500 font-bold">可扣抵稅額 (8.5%)</span>
+                                        <span className="text-blue-400 font-mono">+{formatCurrency(taxCredit)}</span>
+                                    </div>
+                                    <div className="pt-4 border-t border-white/5 flex justify-between items-center">
+                                        <span className="text-slate-300 font-black">真實節稅/補稅效應</span>
+                                        <span className={cn("text-xl font-black font-mono", taxCredit >= incomeTaxBurden ? "text-emerald-400" : "text-rose-400")}>
+                                            {taxCredit >= incomeTaxBurden ? "+" : ""}{formatCurrency(taxCredit - incomeTaxBurden)}
+                                        </span>
+                                    </div>
+                                </div>
+                                <p className="text-[14px] font-bold text-slate-400 leading-7">
+                                    {taxCredit > incomeTaxBurden
+                                        ? `在您的級距下，此投資「穩賺不賠」且能產生溢額抵減，實質殖利率高於帳面數值。`
+                                        : `您的邊際稅率較高，抵減額不足以覆蓋稅負，建議考慮「分戶持有」或選擇「不計入所得」之標的。`}
+                                </p>
+                            </div>
+
+                            <div className="space-y-6">
+                                <h4 className="text-sm font-black text-slate-300 flex items-center gap-3">
+                                    <div className="w-2 h-2 rounded-full bg-rise shadow-[0_0_8px_rgba(16,185,129,0.5)]" />
+                                    各級距「稅後實領」一覽
+                                </h4>
+                                <div className="grid grid-cols-2 gap-4">
+                                    {[0.05, 0.12, 0.2, 0.3, 0.4].map(r => {
+                                        const burden = totalDividend * r;
+                                        const credit = Math.min(totalDividend * TAX_RATE, TAX_LIMIT);
+                                        const net = netDividend - burden + credit;
+                                        return (
+                                            <div key={r} className={cn("p-4 rounded-2xl border", r === userTaxRate ? "bg-white/10 border-white/20" : "bg-white/5 border-transparent opacity-60")}>
+                                                <span className="text-[10px] font-black text-slate-500 block uppercase mb-1">{r * 100}% 級距</span>
+                                                <span className="text-lg font-black text-white font-mono">{formatCurrency(net)}</span>
+                                            </div>
+                                        );
+                                    })}
+                                </div>
+                            </div>
+                        </div>
                     </section>
                 </main>
             </div>

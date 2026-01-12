@@ -35,7 +35,7 @@ export default function TickerTape() {
                         </span>
                         <div className={`flex items-center gap-0.5 text-xs font-bold leading-none ${stock.isUp ? 'text-rise' : 'text-fall'}`}>
                             {stock.isUp ? <TrendingUp size={12} /> : <TrendingDown size={12} />}
-                            <span>{Math.abs(stock.change).toFixed(1)}%</span>
+                            <span>{Math.abs(stock.change || 0).toFixed(1)}%</span>
                         </div>
                     </div>
                 ))}
