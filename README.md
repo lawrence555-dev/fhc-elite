@@ -28,15 +28,26 @@
 ## 📘 產品與開發指引
 - 📖 **[產品使用指南](docs/PRODUCT_GUIDE.md)**：終端用戶如何操作各項監控功能。
 - 📊 **[數據來源說明](docs/DATA_SOURCES.md)**：詳細列出股價、財報、籌碼及 AI 文本的獲取來源。
-- 📜 **[開發日誌 (MVP v0.1)](docs/CHANGELOG.md)**：記錄專案從零到一各個版本的演進歷程。
+- 📜 **[開發日誌 (MVP v0.1)](docs/CHANGELOG.md)**：記錄專案從零到一各個版本的演進歷程。# 金控全能價值導航 (FHC-Elite)
 
----
+專業的金控股權投資分析與稅務規劃工具。
 
-## ✨ 核心特色
-1. **13 金控全景視圖**：預設監控台灣 13 家核心金控（包含最新台新新光金合併實體）。
-2. **台灣市場標準色彩**：全站紅漲綠跌，符合在地投資習慣。
-3. **AI 法說會摘要**：Gemini 1.5 Pro 自動總結財報亮點，省去閱讀數百頁簡報的時間。
-4. **極致 UI/UX**：Glassmorphism 玻璃擬態風格，搭載自定義 Toast 通知系統。
+## ✨ 核心功能
+- **背景數據同步**：每 5 分鐘自動同步 Yahoo Finance 與 TWSE 數據。
+- **時區修正系統**：精確處理 `Asia/Taipei` 時區，收盤後線圖依然完整呈現。
+- **數據中樞 (JSON 快取)**：極速響應的首頁報價與分時行情。
+- **專業稅務計算機**：
+    - 支持全台 13 檔金控。
+    - 內建二代健保 (2.11%) 與所得稅抵減 (8.5%) 演算法。
+- **雲端分析中心 (Investment Simulator)**：
+    - 永久儲存投資情境至 PostgreSQL。
+    - **多方案視覺比對**：直觀比較稅務效率、稅後實領金額。
+
+## 🛠 技術棧
+- **Frontend**: Next.js 15 (App Router), Tailwind CSS, Framer Motion
+- **Backend**: Next.js API Routes, Prisma ORM
+- **Database**: PostgreSQL
+- **Data Source**: Yahoo Finance API, TWSE Open Data
 
 ---
 

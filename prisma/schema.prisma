@@ -70,3 +70,21 @@ model PortfolioHolding {
   @@unique([userId, stockId])
   @@index([userId])
 }
+
+model TaxScenario {
+  id            String   @id @default(uuid())
+  userId        String   @default("default-user")
+  stockId       String
+  stockName     String
+  shares        Int
+  price         Float
+  dividend      Float
+  totalDividend Float
+  netDividend   Float
+  nhiPremium    Float
+  taxCredit     Float
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@index([userId])
+}
