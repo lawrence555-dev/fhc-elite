@@ -78,56 +78,65 @@ export default function DashboardPage() {
   useEffect(() => {
     setMounted(true);
 
-    // Initial Data Load (Simulation + Real Fetch)
-    const initData = async () => {
-      // 1. Initial State
-      setStocks(INITIAL_STOCKS.map(s => ({
-        ...s,
-        data: [],
-        chipData: []
-      })));
-
+    const fetchRealtimePrices = async () => {
       try {
-        // 2. Fetch Real-time Current Prices
         const res = await fetch("/api/stock-prices/realtime");
         const realData = await res.json();
-
-        if (Array.isArray(realData)) {
-          const hasRealData = realData.length > 0;
-          // 3. Fetch Intraday History for all 13 stocks (Parallel)
-          const intradayPromises = INITIAL_STOCKS.map(async (s) => {
-            try {
-              const intraRes = await fetch(`/api/stock-prices/intraday?id=${s.id}`);
-              const intraData = await intraRes.json();
-              return { id: s.id, history: intraData };
-            } catch (e) {
-              return { id: s.id, history: [] };
-            }
-          });
-
-          const allHistory = await Promise.all(intradayPromises);
-
+        if (Array.isArray(realData) && realData.length > 0) {
           setStocks(prev => prev.map(s => {
-            const real = hasRealData ? realData.find(r => r.id === s.id) : null;
-            const historyItem = allHistory.find(h => h.id === s.id);
-            const history = Array.isArray(historyItem?.history) ? historyItem.history : [];
-
+            const real = realData.find(r => r.id === s.id);
+            if (!real) return s;
             return {
               ...s,
-              price: real ? real.price : s.price,
-              change: real ? real.change : s.change,
-              diff: real ? real.change : s.diff,
-              isUp: real ? real.change >= 0 : s.isUp,
-              data: history // Only use real history
+              price: real.price,
+              change: real.change,
+              diff: real.diff,
+              isUp: real.diff >= 0
             };
           }));
         }
       } catch (e) {
-        console.error("Data fetch failed.", e);
+        console.error("Real-time poll failed", e);
+      }
+    };
+
+    const initData = async () => {
+      setMounted(true);
+      try {
+        // 1. Fetch Real-time Current Prices First
+        await fetchRealtimePrices();
+
+        // 2. Fetch Intraday History for all 13 stocks (Parallel)
+        const intradayPromises = INITIAL_STOCKS.map(async (s) => {
+          try {
+            const intraRes = await fetch(`/api/stock-prices/intraday?id=${s.id}`);
+            const intraData = await intraRes.json();
+            return { id: s.id, history: intraData };
+          } catch (e) {
+            return { id: s.id, history: [] };
+          }
+        });
+
+        const allHistory = await Promise.all(intradayPromises);
+
+        setStocks(prev => prev.map(s => {
+          const historyItem = allHistory.find(h => h.id === s.id);
+          const history = Array.isArray(historyItem?.history) ? historyItem.history : [];
+          return {
+            ...s,
+            data: history
+          };
+        }));
+      } catch (e) {
+        console.error("Initial data fetch failed.", e);
       }
     };
 
     initData();
+
+    // 3. Set up Polling for Real-time Prices (Every 30 seconds during market hours)
+    const interval = setInterval(fetchRealtimePrices, 30000);
+    return () => clearInterval(interval);
   }, []);
 
   // Fetch AI Summary when selectedId changes

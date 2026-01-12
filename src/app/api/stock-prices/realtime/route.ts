@@ -2,15 +2,14 @@ import { NextResponse } from "next/server";
 
 export async function GET() {
     try {
-        // Official TWSE After-hour Daily Last Prices (Stable public endpoint)
-        // Correcting URL from oapi to openapi
-        const response = await fetch("https://openapi.twse.com.tw/v1/stock/afterhour_daily_last", {
-            next: { revalidate: 300 } // Cache for 5 minutes
+        // Official TWSE Daily Prices (Includes live-ish data during market hours)
+        const response = await fetch("https://openapi.twse.com.tw/v1/exchangeReport/STOCK_DAY_ALL", {
+            next: { revalidate: 60 } // Cache for 1 minute for "live" feel
         });
 
         if (!response.ok) {
-            console.warn("TWSE API returned non-OK status, might be weekend.");
-            return NextResponse.json([]); // Return empty array during non-trading times
+            console.warn("TWSE API returned non-OK status.");
+            return NextResponse.json([]);
         }
 
         const contentType = response.headers.get("content-type");
@@ -34,14 +33,22 @@ export async function GET() {
 
         const filtered = data
             .filter((s: any) => fhcIds.includes(s.Code))
-            .map((s: any) => ({
-                id: s.Code,
-                name: s.Name,
-                price: parseFloat(s.ClosePrice),
-                change: parseFloat(s.Change) || 0,
-                volume: parseInt(s.TradeVolume),
-                timestamp: new Date().toISOString()
-            }));
+            .map((s: any) => {
+                const priceVal = parseFloat(s.ClosingPrice) || 0;
+                const changeVal = parseFloat(s.Change) || 0;
+                const prevClose = priceVal - changeVal;
+                const pctChange = prevClose !== 0 ? (changeVal / prevClose) * 100 : 0;
+
+                return {
+                    id: s.Code,
+                    name: s.Name,
+                    price: priceVal,
+                    diff: changeVal,
+                    change: pctChange,
+                    volume: parseInt(s.TradeVolume) || 0,
+                    timestamp: new Date().toISOString()
+                };
+            });
 
         return NextResponse.json(filtered);
     } catch (error) {
