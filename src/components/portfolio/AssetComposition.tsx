@@ -5,6 +5,7 @@ import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, Legend } from "recha
 interface AssetData {
     name: string;
     value: number;
+    [key: string]: any;
 }
 
 interface AssetCompositionProps {
@@ -36,7 +37,7 @@ export default function AssetComposition({ data }: AssetCompositionProps) {
                         <Tooltip
                             contentStyle={{ backgroundColor: "#0f172a", border: "1px solid rgba(255,255,255,0.05)", borderRadius: "8px" }}
                             itemStyle={{ color: "#fff", fontWeight: "bold" }}
-                            formatter={(value: number) => `$${value.toLocaleString()}`}
+                            formatter={(value: any) => `$${(Number(value) || 0).toLocaleString()}`}
                         />
                         <Legend
                             verticalAlign="bottom"
