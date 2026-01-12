@@ -214,9 +214,14 @@ export default function TaxPage() {
                                         <label className="text-[11px] font-black text-slate-500 uppercase tracking-widest mb-3 block">持股數量 (股)</label>
                                         <div className="relative group">
                                             <input
-                                                type="number"
-                                                value={shares}
-                                                onChange={(e) => setShares(Number(e.target.value))}
+                                                type="text"
+                                                inputMode="numeric"
+                                                value={shares === 0 ? "" : shares}
+                                                onChange={(e) => {
+                                                    const val = e.target.value.replace(/\D/g, "");
+                                                    setShares(val === "" ? 0 : parseInt(val, 10));
+                                                }}
+                                                placeholder="請輸入持股數..."
                                                 className="w-full bg-black/40 border border-white/10 rounded-xl py-3 pl-4 pr-12 text-2xl font-black text-white focus:outline-none focus:ring-1 focus:ring-rise/50 font-mono"
                                             />
                                             <div className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-600 font-black text-xs">QTY</div>
