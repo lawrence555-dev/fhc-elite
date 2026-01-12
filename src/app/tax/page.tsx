@@ -118,11 +118,13 @@ export default function TaxPage() {
             } else {
                 const errData = await res.json();
                 console.error("Save failed:", errData);
-                showToast(`儲存失敗: ${errData.error || "伺服器錯誤"}`, "error");
+                // 顯示具體的錯誤原因 (如資料庫表不存在或連線問題)
+                const errorMsg = errData.details || errData.error || "伺服器錯誤";
+                showToast(`儲存失敗: ${errorMsg}`, "error");
             }
-        } catch (error) {
+        } catch (error: any) {
             console.error("Save error:", error);
-            showToast("聯網失敗，請稍後再試", "error");
+            showToast(`聯網失敗: ${error?.message || "請檢查網路連線"}`, "error");
         }
     };
 
