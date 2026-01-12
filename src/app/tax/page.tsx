@@ -338,52 +338,123 @@ export default function TaxPage() {
                                 </div>
                             </div>
 
-                            {/* 會計師節稅導航 - 更新佈局 */}
+                            {/* 會計師節稅導航 - 深度優化版 (敏感度分析儀) */}
                             <section className="glass p-8 bg-slate-900/60 border-white/10 ring-1 ring-white/5 relative overflow-hidden group">
-                                <div className="flex items-center gap-3 mb-6">
-                                    <div className="w-8 h-8 bg-fall/20 rounded-lg flex items-center justify-center text-fall">
-                                        <TrendingUp size={18} />
-                                    </div>
-                                    <h3 className="text-lg font-black text-white tracking-widest uppercase italic">節稅導航 (Audit Insights)</h3>
-                                </div>
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
-                                    <div className="space-y-4">
-                                        <div className="p-4 bg-white/5 rounded-2xl border border-white/5">
-                                            <p className="text-[13px] font-bold text-slate-300 leading-relaxed">
-                                                {taxCredit > incomeTaxBurden
-                                                    ? `✅ 策略分析：您的股息可抵減稅額高於應繳稅額，實質上增加了 ${((taxCredit - incomeTaxBurden) / (totalDividend || 1) * 100).toFixed(2)}% 的顯性收益。`
-                                                    : `⚠️ 策略建議：目前的邊際稅率較高，建議將申報戶分散，或優先選擇配發資本利得佔比較高的標的。`}
-                                            </p>
+                                <div className="flex items-center justify-between mb-8">
+                                    <div className="flex items-center gap-3">
+                                        <div className="w-10 h-10 bg-blue-500/20 rounded-xl flex items-center justify-center text-blue-400 group-hover:scale-110 transition-transform">
+                                            <ShieldCheck size={22} />
                                         </div>
-                                        <div className="flex justify-between items-center px-2">
-                                            <span className="text-[10px] font-black text-slate-500 uppercase">稅務抵減效能 (Efficiency)</span>
-                                            <span className={cn("text-xs font-black", taxCredit >= incomeTaxBurden ? "text-emerald-400" : "text-rose-400")}>
+                                        <div>
+                                            <h3 className="text-lg font-black text-white tracking-widest uppercase italic">節稅導航與敏感度分析 (Tax Sensitivity)</h3>
+                                            <p className="text-[10px] text-slate-500 font-bold uppercase tracking-wider">根據邊際稅率估算您的「實質收益」與「稅後殖利率」</p>
+                                        </div>
+                                    </div>
+                                    <div className="flex gap-6">
+                                        <div className="text-right border-r border-white/10 pr-6">
+                                            <span className="text-[10px] block text-slate-500 font-black uppercase mb-1">抵減效能評估</span>
+                                            <span className={cn("text-xl font-black font-mono", taxCredit >= incomeTaxBurden ? "text-emerald-400" : "text-rose-400")}>
                                                 {((taxCredit / (incomeTaxBurden || 1)) * 100).toFixed(1)}%
                                             </span>
                                         </div>
-                                        <div className="h-1.5 w-full bg-white/5 rounded-full overflow-hidden">
-                                            <div className={cn("h-full transition-all duration-1000", taxCredit >= incomeTaxBurden ? "bg-emerald-500" : "bg-rose-500")} style={{ width: `${Math.min(100, (taxCredit / (incomeTaxBurden || 1)) * 100)}%` }} />
+                                        <div className="text-right">
+                                            <span className="text-[10px] block text-slate-500 font-black uppercase mb-1">實質所得稅率</span>
+                                            <span className="text-xl font-black text-white font-mono">
+                                                {(((incomeTaxBurden - taxCredit) / (totalDividend || 1)) * 100).toFixed(2)}%
+                                            </span>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+                                    {/* 左側：深度策略建議 */}
+                                    <div className="md:col-span-1 space-y-4">
+                                        <div className="p-4 bg-white/5 rounded-2xl border border-white/10 relative overflow-hidden h-full flex flex-col justify-center">
+                                            <ReceiptText className="absolute -right-2 -bottom-2 w-16 h-16 text-white/5 -rotate-12" />
+                                            <div className="flex items-center gap-2 mb-2 text-blue-400">
+                                                <Info size={14} />
+                                                <span className="text-[10px] font-black uppercase">會計師觀點</span>
+                                            </div>
+                                            <p className="text-[12px] font-bold text-slate-300 leading-relaxed relative z-10">
+                                                {taxCredit > incomeTaxBurden
+                                                    ? `此配置處於「稅務溢價區」，您不僅無需繳稅，還能產生退稅效應，實質額外增加 ${((taxCredit - incomeTaxBurden) / (totalDividend || 1) * 100).toFixed(2)}% 收益。`
+                                                    : `處於「稅務遞減區」，建議考慮 ${selectedStock.dividend > 1.5 ? "拆單持有" : "增加受供養人"} 以降低邊際稅率，或改配置資本利得股。`}
+                                            </p>
                                         </div>
                                     </div>
 
-                                    <div className="grid grid-cols-5 gap-2">
-                                        {[0.05, 0.12, 0.2, 0.3, 0.4].map(r => {
-                                            const burden = totalDividend * r;
-                                            const credit = Math.min(totalDividend * TAX_RATE, TAX_LIMIT);
-                                            const net = netDividend - burden + credit;
-                                            const isActive = r === userTaxRate;
-                                            return (
-                                                <div key={r} className={cn(
-                                                    "p-3 rounded-xl border flex flex-col items-center justify-center transition-all",
-                                                    isActive ? "bg-white/10 border-white/20 ring-1 ring-white/10" : "bg-white/5 border-transparent opacity-40 scale-95"
-                                                )}>
-                                                    <span className="text-[8px] font-black text-slate-500 mb-1">{r * 100}%</span>
-                                                    <span className="text-[11px] font-black text-white font-mono">{(net / 1000).toFixed(1)}k</span>
-                                                </div>
-                                            );
-                                        })}
-                                        <div className="col-span-5 text-center mt-2">
-                                            <span className="text-[9px] font-black text-slate-600 uppercase tracking-widest">各級距稅後實領對照量 (單位: TWD)</span>
+                                    {/* 中右側：多維度對照表 */}
+                                    <div className="md:col-span-3">
+                                        <div className="grid grid-cols-5 gap-3">
+                                            {[0.05, 0.12, 0.2, 0.3, 0.4].map(r => {
+                                                const burden = totalDividend * r;
+                                                const credit = Math.min(totalDividend * TAX_RATE, TAX_LIMIT);
+                                                const net = netDividend - burden + credit;
+                                                const effYield = (net / (shares * selectedStock.price || 1)) * 100;
+                                                const isActive = r === userTaxRate;
+
+                                                return (
+                                                    <div key={r} className={cn(
+                                                        "p-4 rounded-2xl border flex flex-col items-center justify-between transition-all duration-300",
+                                                        isActive
+                                                            ? "bg-gradient-to-b from-blue-600/20 to-blue-900/40 border-blue-500/50 ring-1 ring-blue-500/20 scale-105 shadow-2xl shadow-blue-500/10"
+                                                            : "bg-white/5 border-white/10 opacity-50 hover:opacity-80 hover:bg-white/10"
+                                                    )}>
+                                                        <div className="flex flex-col items-center mb-4">
+                                                            <span className="text-[10px] font-black text-slate-500 mb-1">{r * 100}% 級距</span>
+                                                            <div className={cn("h-1 w-8 rounded-full mb-3", isActive ? "bg-blue-400" : "bg-slate-700")} />
+                                                        </div>
+
+                                                        <div className="text-center space-y-3">
+                                                            <div>
+                                                                <span className="text-[9px] block text-slate-600 font-bold uppercase mb-0.5">稅後淨得</span>
+                                                                <span className="text-lg font-black text-white font-mono italic">
+                                                                    {formatCurrency(net).replace('NT$', '')}
+                                                                </span>
+                                                            </div>
+                                                            <div>
+                                                                <span className="text-[9px] block text-slate-600 font-bold uppercase mb-0.5">實質殖利率</span>
+                                                                <span className={cn(
+                                                                    "text-sm font-black font-mono",
+                                                                    effYield > dividendYield ? "text-emerald-400" : "text-slate-400"
+                                                                )}>
+                                                                    {effYield.toFixed(2)}%
+                                                                </span>
+                                                            </div>
+                                                        </div>
+
+                                                        {isActive && (
+                                                            <div className="mt-4 flex items-center gap-1">
+                                                                <div className="w-1.5 h-1.5 rounded-full bg-blue-400 animate-ping" />
+                                                                <span className="text-[9px] font-black text-blue-400 uppercase tracking-tighter">當前落點</span>
+                                                            </div>
+                                                        )}
+                                                    </div>
+                                                );
+                                            })}
+                                        </div>
+                                    </div>
+                                </div>
+
+                                {/* 底部進度條裝飾 */}
+                                <div className="mt-8 pt-6 border-t border-white/5 flex items-center justify-between">
+                                    <div className="flex-1 mr-10">
+                                        <div className="flex justify-between items-center mb-2">
+                                            <span className="text-[9px] font-black text-slate-600 uppercase tracking-widest">抵減上限使用率 ({formatCurrency(taxCredit)} / {formatCurrency(TAX_LIMIT)})</span>
+                                            <span className="text-xs font-black text-slate-400 font-mono">{((taxCredit / TAX_LIMIT) * 100).toFixed(1)}%</span>
+                                        </div>
+                                        <div className="h-1.5 w-full bg-white/5 rounded-full overflow-hidden">
+                                            <div className="h-full bg-gradient-to-r from-blue-600 to-indigo-400 transition-all duration-1000 shadow-[0_0_10px_rgba(59,130,246,0.5)]" style={{ width: `${(taxCredit / TAX_LIMIT) * 100}%` }} />
+                                        </div>
+                                    </div>
+                                    <div className="flex gap-4">
+                                        <div className="flex items-center gap-2">
+                                            <div className="w-2 h-2 rounded-full bg-emerald-500 shadow-[0_0_5px_rgba(16,185,129,0.5)]" />
+                                            <span className="text-[9px] font-black text-slate-500 uppercase">免繳區</span>
+                                        </div>
+                                        <div className="flex items-center gap-2">
+                                            <div className="w-2 h-2 rounded-full bg-rose-500 shadow-[0_0_5px_rgba(244,63,94,0.5)]" />
+                                            <span className="text-[9px] font-black text-slate-500 uppercase">課稅區</span>
                                         </div>
                                     </div>
                                 </div>
