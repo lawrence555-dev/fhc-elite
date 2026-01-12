@@ -3,7 +3,6 @@ import prisma from "@/lib/prisma";
 
 export async function GET(request: Request) {
     try {
-        console.log("Prisma keys:", Object.keys(prisma));
         const { searchParams } = new URL(request.url);
         const userId = searchParams.get("userId") || "default-user";
 
