@@ -77,11 +77,11 @@ export default function FhcCard({
                         <Tooltip
                             trigger="hover"
                             content={({ active, payload }) => {
-                                if (active && payload && payload.length) {
+                                if (active && payload && payload.length && payload[0].value !== null) {
                                     return (
                                         <div className="glass bg-slate-950/90 border-white/10 p-2 rounded-lg shadow-2xl">
                                             <p className="text-[10px] font-black text-white px-1 mb-1">
-                                                {payload[0].value?.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                                                {Number(payload[0].value).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                                             </p>
                                             <p className="text-[8px] font-bold text-slate-500 uppercase px-1">
                                                 即時報價
@@ -101,6 +101,7 @@ export default function FhcCard({
                             fill={`url(#gradient-${id})`}
                             isAnimationActive={true}
                             animationDuration={1500}
+                            connectNulls={false}
                         />
                     </AreaChart>
                 </ResponsiveContainer>

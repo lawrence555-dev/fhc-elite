@@ -135,19 +135,36 @@ export async function getIntradayPrices(stockId: string) {
         orderBy: { timestamp: "asc" }
     });
 
-    return prices.map(p => {
-        try {
-            return {
-                time: p.timestamp.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false }),
-                value: typeof p.price === 'number' ? p.price : parseFloat(String(p.price)),
-                timestamp: p.timestamp
-            };
-        } catch (e) {
-            return {
-                time: "00:00",
-                value: 0,
-                timestamp: p.timestamp
-            };
-        }
-    });
+    // 4. 固定交易時段：09:00 - 13:30 (每 5 分鐘一點，共 55 點)
+    const timeline: any[] = [];
+    const startHour = 9;
+    const startMin = 0;
+    const endHour = 13;
+    const endMin = 30;
+
+    let current = new Date(today);
+    current.setHours(startHour, startMin, 0, 0);
+
+    const endTime = new Date(today);
+    endTime.setHours(endHour, endMin, 0, 0);
+
+    while (current <= endTime) {
+        const timeStr = current.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false });
+
+        // 尋找資料庫中是否有對應點 (容許 2 分鐘內的誤差)
+        const match = prices.find(p => {
+            const diff = Math.abs(p.timestamp.getTime() - current.getTime());
+            return diff < 3 * 60 * 1000; // 3 分鐘內視為同一點
+        });
+
+        timeline.push({
+            time: timeStr,
+            value: match ? (typeof match.price === 'number' ? match.price : parseFloat(String(match.price))) : null,
+            timestamp: new Date(current)
+        });
+
+        current.setMinutes(current.getMinutes() + 5);
+    }
+
+    return timeline;
 }
