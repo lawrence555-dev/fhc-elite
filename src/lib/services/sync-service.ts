@@ -80,13 +80,41 @@ export async function performGlobalSync() {
                 };
             }).filter((item: any) => item.value !== null && item.dateStr === todayStr);
 
-            // 計算 P/B 位階 (簡單演算法)
-            let pbPercentile = (parseInt(stock.id) % 60) + 20; // 預設值
+            // 從 Yahoo Finance 獲取真實財務數據
+            let pbValue = 1.5;  // 預設值
+            let pbPercentile = 50;  // 預設中位數
+
             try {
-                // 這裡在正式環境會查詢資料庫歷史數據，目前先確保邏輯存在
-                // const history = await prisma.dailyPrice.findMany({ where: { stockId: stock.id }, ... });
-                // pbPercentile = calculatePercentile(history, currentPrice);
-            } catch (e) { }
+                // 獲取財務數據 (包含 Book Value)
+                const statsRes = await fetch(`https://query1.finance.yahoo.com/v10/finance/quoteSummary/${symbol}?modules=defaultKeyStatistics,summaryDetail`);
+                if (statsRes.ok) {
+                    const statsData = await statsRes.json();
+                    const keyStats = statsData.quoteSummary?.result?.[0]?.defaultKeyStatistics;
+                    const bookValue = keyStats?.bookValue?.raw || keyStats?.priceToBook?.raw;
+
+                    if (bookValue && bookValue > 0) {
+                        const realPB = currentPrice / bookValue;
+                        pbValue = Number(realPB.toFixed(2));
+
+                        // 簡化的位階計算：假設正常 P/B 範圍為 0.8 - 2.5
+                        // 低於 1.0 = 便宜（0-30%）
+                        // 1.0-1.5 = 合理（30-60%）  
+                        // 1.5-2.0 = 偏貴（60-85%）
+                        // 高於 2.0 = 昂貴（85-100%）
+                        if (realPB < 1.0) {
+                            pbPercentile = Math.round(realPB * 30);
+                        } else if (realPB < 1.5) {
+                            pbPercentile = Math.round(30 + (realPB - 1.0) * 60);
+                        } else if (realPB < 2.0) {
+                            pbPercentile = Math.round(60 + (realPB - 1.5) * 50);
+                        } else {
+                            pbPercentile = Math.min(100, Math.round(85 + (realPB - 2.0) * 15));
+                        }
+                    }
+                }
+            } catch (e) {
+                console.warn(`[PB Calculation] Failed for ${stock.id}:`, e);
+            }
 
             cacheData.stocks[stock.id] = {
                 id: stock.id,
@@ -97,7 +125,7 @@ export async function performGlobalSync() {
                 isUp: diff >= 0,
                 category: stock.category,
                 pbPercentile: pbPercentile,
-                pbValue: Number((currentPrice / 25).toFixed(2)),  // 修正：轉換為數字
+                pbValue: pbValue,
                 data: timeline
             };
 

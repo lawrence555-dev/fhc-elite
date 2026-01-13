@@ -28,30 +28,6 @@ const STOCK_IDS = [
   { id: "5880", name: "合庫金", category: "官股" as const },
 ];
 
-// Generate fake chip data with seed for uniqueness
-const generateChipData = (seed: number) => {
-  // Simple pseudo-random generator based on seed
-  const seededRandom = (s: number) => {
-    const x = Math.sin(s) * 10000;
-    return x - Math.floor(x);
-  };
-
-  return Array.from({ length: 15 }, (_, i) => ({
-    date: `01/${i + 1}`,
-    institutional: Math.floor((seededRandom(seed + i) - 0.4) * 10000),
-    government: Math.floor((seededRandom(seed + i + 100) - 0.3) * 5000),
-  }));
-};
-
-// Generate random walk data for sparklines
-const generateData = (base: number) => {
-  let current = base;
-  return Array.from({ length: 20 }, () => {
-    current = current + (Math.random() - 0.5) * 0.5;
-    return { value: current };
-  });
-};
-
 export default function DashboardPage() {
   const { showToast } = useToast();
   const [mounted, setMounted] = useState(false);
@@ -394,12 +370,31 @@ export default function DashboardPage() {
                     <div className="flex justify-between items-center px-2">
                       <span className="text-xs font-black text-slate-400 uppercase tracking-widest">散戶 FOMO 評分</span>
                       <span className="text-xs font-black text-fall font-mono">
-                        {Math.min(100, Math.floor(Math.abs(selectedStock.change) * 20 + (parseInt(selectedStock.id) % 30)))}/100
-                        {Math.abs(selectedStock.change) * 20 + (parseInt(selectedStock.id) % 30) > 70 ? " (極高)" : " (中)"}
+                        {(() => {
+                          // 真實 FOMO 計算：基於波動率和相對強弱
+                          const volatility = Math.abs(selectedStock.change);  // 當日波動
+                          const priceDeviation = selectedStock.isUp ? selectedStock.change : 0;  // 上漲才計入
+
+                          // FOMO 公式 = 波動度 × 40 + 上漲強度 × 30 + 基準值
+                          const fomoScore = Math.min(100, Math.round(
+                            volatility * 40 +  // 波動越大散戶越容易 FOMO
+                            priceDeviation * 30 +  // 上漲時散戶更容易追高
+                            20  // 基準值
+                          ));
+
+                          const level = fomoScore > 70 ? " (極高)" : fomoScore > 50 ? " (高)" : " (中)";
+                          return `${fomoScore}/100${level}`;
+                        })()}
                       </span>
                     </div>
                     <div className="w-full h-2 bg-slate-800 rounded-full overflow-hidden">
-                      <div className="h-full bg-fall" style={{ width: `${Math.min(100, Math.floor(Math.abs(selectedStock.change) * 20 + (parseInt(selectedStock.id) % 30)))}%` }} />
+                      <div className="h-full bg-fall" style={{
+                        width: `${Math.min(100, Math.round(
+                          Math.abs(selectedStock.change) * 40 +
+                          (selectedStock.isUp ? selectedStock.change * 30 : 0) +
+                          20
+                        ))}%`
+                      }} />
                     </div>
                     <Link href="/subscription" className="w-full">
                       <button className="w-full py-4 bg-rise text-white rounded-xl font-black shadow-lg shadow-rise/20 hover:scale-[1.02] active:scale-95 transition-all">
