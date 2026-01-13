@@ -302,7 +302,7 @@ export default function ReportPage() {
                                     <YAxis stroke="#64748b" fontSize={10} />
                                     <Tooltip
                                         contentStyle={{ background: '#1e293b', border: 'none', borderRadius: '8px' }}
-                                        formatter={(value: number) => [`NT$ ${value}`, '股息']}
+                                        formatter={(value) => [`NT$ ${value ?? 0}`, '股息']}
                                     />
                                     <Bar dataKey="dividend" fill="#f59e0b" radius={[4, 4, 0, 0]} />
                                 </BarChart>
