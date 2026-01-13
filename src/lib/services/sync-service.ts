@@ -50,16 +50,16 @@ export async function performGlobalSync() {
             const res = await fetch(`https://query1.finance.yahoo.com/v8/finance/chart/${symbol}?interval=5m&range=1d`);
             if (!res.ok) continue;
 
-            const data = await res.json();
             const result = data.chart.result[0];
             const meta = result.meta;
             const timestamps = result.timestamp || [];
             const quotes = result.indicators.quote[0].close || [];
 
             const currentPrice = meta.regularMarketPrice;
-            const prevClose = meta.previousClose;
+            // 修正：收盤後 previousClose 可能為 null，改用 chartPreviousClose
+            const prevClose = meta.previousClose || meta.chartPreviousClose || currentPrice;
             const diff = currentPrice - prevClose;
-            const change = (diff / prevClose) * 100;
+            const change = prevClose > 0 ? (diff / prevClose) * 100 : 0;
 
             // 處理今日分時數據 (僅顯示今日 09:00 以後的點位)
             const todayStr = getTaiwanDate();
@@ -96,7 +96,7 @@ export async function performGlobalSync() {
                 isUp: diff >= 0,
                 category: stock.category,
                 pbPercentile: pbPercentile,
-                pbValue: (currentPrice / 25).toFixed(2), // 假設 BV 為 25 (Mock)
+                pbValue: Number((currentPrice / 25).toFixed(2)),  // 修正：轉換為數字
                 data: timeline
             };
 
