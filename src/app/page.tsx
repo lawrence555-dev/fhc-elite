@@ -11,21 +11,21 @@ import { motion, AnimatePresence } from "framer-motion";
 import { cn } from "@/lib/utils";
 import { useToast } from "@/components/Toast";
 
-// 13 FHC Stocks Data (Mock)
-const INITIAL_STOCKS = [
-  { id: "2881", name: "富邦金", price: 95.5, diff: -1.5, change: -1.55, isUp: false, category: "民營" as const, pbValue: 1.55, pbPercentile: 82 },
-  { id: "2882", name: "國泰金", price: 75.9, diff: -0.5, change: -0.65, isUp: false, category: "民營" as const, pbValue: 1.25, pbPercentile: 55 },
-  { id: "2886", name: "兆豐金", price: 40.65, diff: 0.2, change: 0.49, isUp: true, category: "官股" as const, pbValue: 1.72, pbPercentile: 91 },
-  { id: "2891", name: "中信金", price: 49.7, diff: 0.35, change: 0.71, isUp: true, category: "民營" as const, pbValue: 1.48, pbPercentile: 85 },
-  { id: "2880", name: "華南金", price: 31.85, diff: 0.35, change: 1.11, isUp: true, category: "官股" as const, pbValue: 1.41, pbPercentile: 75 },
-  { id: "2884", name: "玉山金", price: 32.85, diff: 0.05, change: 0.15, isUp: true, category: "民營" as const, pbValue: 1.92, pbPercentile: 15 },
-  { id: "2892", name: "第一金", price: 29.7, diff: 0.05, change: 0.17, isUp: true, category: "官股" as const, pbValue: 1.45, pbPercentile: 65 },
-  { id: "2885", name: "元大金", price: 40.8, diff: -0.3, change: -0.73, isUp: false, category: "民營" as const, pbValue: 1.28, pbPercentile: 58 },
-  { id: "2887", name: "台新新光金", price: 20.85, diff: 0.1, change: 0.48, isUp: true, category: "民營" as const, pbValue: 1.05, pbPercentile: 8 },
-  { id: "2890", name: "永豐金", price: 29.2, diff: 0.0, change: 0.0, isUp: true, category: "民營" as const, pbValue: 1.21, pbPercentile: 45 },
-  { id: "2883", name: "凱基金", price: 17.45, diff: -0.15, change: -0.85, isUp: false, category: "民營" as const, pbValue: 0.98, pbPercentile: 7 },
-  { id: "2889", name: "國票金", price: 16.75, diff: 0.05, change: 0.3, isUp: true, category: "民營" as const, pbValue: 1.15, pbPercentile: 35 },
-  { id: "5880", name: "合庫金", price: 24.1, diff: 0.1, change: 0.42, isUp: true, category: "官股" as const, pbValue: 1.48, pbPercentile: 74 },
+// 13 FHC Stocks - Initial structure only, prices loaded dynamically
+const STOCK_IDS = [
+  { id: "2881", name: "富邦金", category: "民營" as const },
+  { id: "2882", name: "國泰金", category: "民營" as const },
+  { id: "2886", name: "兆豐金", category: "官股" as const },
+  { id: "2891", name: "中信金", category: "民營" as const },
+  { id: "2880", name: "華南金", category: "官股" as const },
+  { id: "2884", name: "玉山金", category: "民營" as const },
+  { id: "2892", name: "第一金", category: "官股" as const },
+  { id: "2885", name: "元大金", category: "民營" as const },
+  { id: "2887", name: "台新新光金", category: "民營" as const },
+  { id: "2890", name: "永豐金", category: "民營" as const },
+  { id: "2883", name: "凱基金", category: "民營" as const },
+  { id: "2889", name: "國票金", category: "民營" as const },
+  { id: "5880", name: "合庫金", category: "官股" as const },
 ];
 
 // Generate fake chip data with seed for uniqueness
@@ -56,7 +56,17 @@ export default function DashboardPage() {
   const { showToast } = useToast();
   const [mounted, setMounted] = useState(false);
   const [stocks, setStocks] = useState(
-    INITIAL_STOCKS.map(s => ({ ...s, data: [] as { value: number }[], chipData: [] as any[] }))
+    STOCK_IDS.map(s => ({
+      ...s,
+      price: 0,
+      diff: 0,
+      change: 0,
+      isUp: false,
+      pbValue: 0,
+      pbPercentile: 50,
+      data: [] as any[],
+      chipData: [] as any[]
+    }))
   );
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [aiSummary, setAiSummary] = useState<{ summary: string; sentimentScore: number; highlight: string } | null>(null);
@@ -85,14 +95,16 @@ export default function DashboardPage() {
         const realData = await res.json();
         if (Array.isArray(realData) && realData.length > 0) {
           setStocks(prev => prev.map(s => {
-            const real = realData.find(r => r.id === s.id);
+            const real = realData.find((r: any) => r.id === s.id);
             if (!real) return s;
             return {
               ...s,
-              price: real.price,
-              change: real.change,
-              diff: real.diff,
-              isUp: real.diff >= 0
+              price: real.price || s.price,
+              change: real.change || s.change,
+              diff: real.diff || s.diff,
+              isUp: (real.diff || 0) >= 0,
+              pbValue: real.pbValue || s.pbValue,
+              pbPercentile: real.pbPercentile || s.pbPercentile
             };
           }));
         }
@@ -102,7 +114,7 @@ export default function DashboardPage() {
     };
 
     const fetchIntradayHistory = async () => {
-      const intradayPromises = INITIAL_STOCKS.map(async (s) => {
+      const intradayPromises = STOCK_IDS.map(async (s) => {
         try {
           const intraRes = await fetch(`/api/stock-prices/intraday?stockId=${s.id}`);
           const intraData = await intraRes.json();
