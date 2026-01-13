@@ -59,7 +59,7 @@ export default function FhcCard({
                         change > 0 ? "text-rise" : change < 0 ? "text-fall" : "text-slate-400"
                     )}>
                         {change > 0 ? <TrendingUp size={10} /> : change < 0 ? <TrendingDown size={10} /> : <Minus size={10} />}
-                        <span>{change > 0 ? "+" : ""}{diff.toFixed(2)} ({change > 0 ? "+" : ""}{change.toFixed(2)}%)</span>
+                        <span>{typeof diff === 'number' && typeof change === 'number' ? `${change > 0 ? "+" : ""}${diff.toFixed(2)} (${change > 0 ? "+" : ""}${change.toFixed(2)}%)` : '---'}</span>
                     </div>
                 </div>
             </div>
@@ -127,7 +127,7 @@ export default function FhcCard({
                     <Info size={14} className="text-slate-600 hover:text-white cursor-help transition-colors" />
                     <div className="absolute bottom-full right-0 mb-2 w-48 p-3 glass bg-slate-900 border-white/10 opacity-0 group-hover/info:opacity-100 pointer-events-none transition-all duration-300 translate-y-2 group-hover/info:translate-y-0 z-50 shadow-2xl">
                         <p className="text-[10px] font-bold leading-relaxed text-slate-300">
-                            目前 P/B 為 <span className="text-white font-black">{pbValue.toFixed(2)}</span>，處於 5 年歷史位階的 <span className="text-white font-black">{pbPercentile}%</span>。
+                            目前 P/B 為 <span className="text-white font-black">{typeof pbValue === 'number' ? pbValue.toFixed(2) : '--'}</span>，處於 5 年歷史位階的 <span className="text-white font-black">{pbPercentile}%</span>。
                             {pbPercentile < 15 ? " 目前極度低估，適合穩健投資者關注。" : ""}
                         </p>
                     </div>
