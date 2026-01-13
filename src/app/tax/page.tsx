@@ -229,13 +229,18 @@ export default function TaxPage() {
                                             <div className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-600 font-black text-xs">QTY</div>
                                         </div>
                                         <div className="grid grid-cols-4 gap-1.5 mt-3">
-                                            {[1000, 10000, 50000, 100000].map(v => (
+                                            {[1000, 5000, 10000, 50000].map(v => (
                                                 <button
                                                     key={v}
                                                     onClick={() => setShares(v)}
-                                                    className="py-2 rounded-lg bg-white/5 text-[10px] font-black text-slate-500 hover:bg-white/10 hover:text-white border border-white/5 transition-all outline-none"
+                                                    className={cn(
+                                                        "py-2 rounded-lg text-[10px] font-black transition-all border outline-none",
+                                                        shares === v
+                                                            ? "bg-blue-600/30 border-blue-500/50 text-blue-400"
+                                                            : "bg-white/5 border-white/5 text-slate-500 hover:bg-white/10 hover:text-white"
+                                                    )}
                                                 >
-                                                    {v >= 10000 ? `${v / 10000}張` : `${v}股`}
+                                                    {v / 1000}張
                                                 </button>
                                             ))}
                                         </div>
