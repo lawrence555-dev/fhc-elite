@@ -91,27 +91,31 @@ export async function performGlobalSync() {
                 data: timeline
             };
 
-            // 非同步寫入資料庫 (背景執行)
+            // 非同步寫入資料庫：將今日所有分時點位持久化
             if (timestamps.length > 0) {
-                const latestTs = timestamps[timestamps.length - 1];
-                const latestPrice = quotes[quotes.length - 1];
-                if (latestPrice) {
-                    prisma.dailyPrice.upsert({
+                const upsertPromises = timestamps.map((ts: number, i: number) => {
+                    const price = quotes[i];
+                    if (price === null || price === undefined) return null;
+                    return prisma.dailyPrice.upsert({
                         where: {
                             stockId_timestamp: {
                                 stockId: stock.id,
-                                timestamp: new Date(latestTs * 1000)
+                                timestamp: new Date(ts * 1000)
                             }
                         },
                         create: {
                             stockId: stock.id,
-                            timestamp: new Date(latestTs * 1000),
-                            price: latestPrice,
+                            timestamp: new Date(ts * 1000),
+                            price: price,
                             volume: BigInt(0)
                         },
-                        update: { price: latestPrice }
-                    }).catch(() => { });
-                }
+                        update: { price: price }
+                    });
+                }).filter(p => p !== null);
+
+                Promise.all(upsertPromises).catch(err => {
+                    console.error(`[Global-Sync] DB Batch Upsert Failed for ${stock.id}:`, err);
+                });
             }
 
         } catch (error) {
@@ -154,6 +158,27 @@ export async function getIntradayPrices(stockId: string) {
             return stock ? stock.data : [];
         } catch (e) { }
     }
+    // 若快取無效，嘗試從資料庫讀取最近 24 小時的數據
+    try {
+        const twentyFourHoursAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
+        const dbPrices = await prisma.dailyPrice.findMany({
+            where: {
+                stockId: stockId,
+                timestamp: { gte: twentyFourHoursAgo }
+            },
+            orderBy: { timestamp: "asc" }
+        });
+
+        if (dbPrices.length > 0) {
+            return dbPrices.map(p => ({
+                time: new Intl.DateTimeFormat('en-US', { hour: '2-digit', minute: '2-digit', hour12: false, timeZone: 'Asia/Taipei' }).format(p.timestamp),
+                value: p.price
+            }));
+        }
+    } catch (e) {
+        console.error(`[Intraday] DB Read Failed for ${stockId}:`, e);
+    }
+
     await performGlobalSync();
     return [];
 }
