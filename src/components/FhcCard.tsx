@@ -52,7 +52,7 @@ export default function FhcCard({
                 </div>
                 <div className="text-right">
                     <div className="text-2xl font-black font-mono tracking-tighter text-white">
-                        {price.toFixed(2)}
+                        {price > 0 ? price.toFixed(2) : '---'}
                     </div>
                     <div className={cn(
                         "flex items-center justify-end gap-1 text-[10px] font-bold",
@@ -65,46 +65,52 @@ export default function FhcCard({
             </div>
 
             <div className="h-20 w-full mb-4">
-                <ResponsiveContainer width="100%" height="100%">
-                    <AreaChart data={data}>
-                        <defs>
-                            <linearGradient id={`gradient-${id}`} x1="0" y1="0" x2="0" y2="1">
-                                <stop offset="5%" stopColor={change > 0 ? "#ef4444" : change < 0 ? "#22c55e" : "#94a3b8"} stopOpacity={0.3} />
-                                <stop offset="95%" stopColor={change > 0 ? "#ef4444" : change < 0 ? "#22c55e" : "#94a3b8"} stopOpacity={0} />
-                            </linearGradient>
-                        </defs>
-                        <YAxis hide domain={['dataMin - 0.2', 'dataMax + 0.2']} />
-                        <Tooltip
-                            trigger="hover"
-                            content={({ active, payload }) => {
-                                if (active && payload && payload.length && payload[0].value !== null) {
-                                    return (
-                                        <div className="glass bg-slate-950/90 border-white/10 p-2 rounded-lg shadow-2xl">
-                                            <p className="text-[10px] font-black text-white px-1 mb-1">
-                                                {Number(payload[0].value).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                                            </p>
-                                            <p className="text-[8px] font-bold text-slate-500 uppercase px-1">
-                                                即時報價
-                                            </p>
-                                        </div>
-                                    );
-                                }
-                                return null;
-                            }}
-                        />
-                        <Area
-                            type="monotone"
-                            dataKey="value"
-                            stroke={change > 0 ? "#ef4444" : change < 0 ? "#22c55e" : "#94a3b8"}
-                            strokeWidth={3}
-                            fillOpacity={1}
-                            fill={`url(#gradient-${id})`}
-                            isAnimationActive={true}
-                            animationDuration={1500}
-                            connectNulls={false}
-                        />
-                    </AreaChart>
-                </ResponsiveContainer>
+                {data && data.length > 0 ? (
+                    <ResponsiveContainer width="100%" height="100%">
+                        <AreaChart data={data}>
+                            <defs>
+                                <linearGradient id={`gradient-${id}`} x1="0" y1="0" x2="0" y2="1">
+                                    <stop offset="5%" stopColor={change > 0 ? "#ef4444" : change < 0 ? "#22c55e" : "#94a3b8"} stopOpacity={0.3} />
+                                    <stop offset="95%" stopColor={change > 0 ? "#ef4444" : change < 0 ? "#22c55e" : "#94a3b8"} stopOpacity={0} />
+                                </linearGradient>
+                            </defs>
+                            <YAxis hide domain={['dataMin - 0.2', 'dataMax + 0.2']} />
+                            <Tooltip
+                                trigger="hover"
+                                content={({ active, payload }) => {
+                                    if (active && payload && payload.length && payload[0].value !== null) {
+                                        return (
+                                            <div className="glass bg-slate-950/90 border-white/10 p-2 rounded-lg shadow-2xl">
+                                                <p className="text-[10px] font-black text-white px-1 mb-1">
+                                                    {Number(payload[0].value).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                                                </p>
+                                                <p className="text-[8px] font-bold text-slate-500 uppercase px-1">
+                                                    即時報價
+                                                </p>
+                                            </div>
+                                        );
+                                    }
+                                    return null;
+                                }}
+                            />
+                            <Area
+                                type="monotone"
+                                dataKey="value"
+                                stroke={change > 0 ? "#ef4444" : change < 0 ? "#22c55e" : "#94a3b8"}
+                                strokeWidth={3}
+                                fillOpacity={1}
+                                fill={`url(#gradient-${id})`}
+                                isAnimationActive={true}
+                                animationDuration={1500}
+                                connectNulls={false}
+                            />
+                        </AreaChart>
+                    </ResponsiveContainer>
+                ) : (
+                    <div className="h-full w-full flex items-center justify-center">
+                        <div className="text-xs text-slate-600 font-bold">載入中...</div>
+                    </div>
+                )}
             </div>
 
             <div className="flex justify-between items-center pt-4 border-t border-white/5">
