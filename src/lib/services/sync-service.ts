@@ -170,9 +170,10 @@ export async function performGlobalSync() {
 
 /**
  * 從快取中獲取即時數據 (全站通用)
- * 如果快取超過 1 分鐘則強制刷新
+ * 採用「先返回舊數據，背景刷新」策略以加速首次渲染
  */
 export async function getCachedStocks() {
+    // 如果快取存在，立即返回（不阻塞）
     if (fs.existsSync(CACHE_PATH)) {
         try {
             const data = JSON.parse(fs.readFileSync(CACHE_PATH, "utf8"));
@@ -180,23 +181,29 @@ export async function getCachedStocks() {
             const now = new Date();
             const diffMs = now.getTime() - lastUpdated.getTime();
 
-            // 如果快取超過 1 分鐘，強制刷新
-            if (diffMs > 60000) {
-                console.log("[Cache] Stale cache, forcing refresh...");
-                await performGlobalSync();
-                const freshData = JSON.parse(fs.readFileSync(CACHE_PATH, "utf8"));
-                return freshData.stocks ? Object.values(freshData.stocks) : [];
+            // 如果快取超過 2 分鐘，背景異步刷新（不阻塞返回）
+            if (diffMs > 120000) {
+                console.log("[Cache] Stale cache, triggering background refresh...");
+                // 非阻塞：不 await，讓刷新在背景執行
+                performGlobalSync().catch(e => console.error("[Cache] Background refresh failed:", e));
             }
 
             return data.stocks ? Object.values(data.stocks) : [];
         } catch (e) {
             console.error("[Cache] Read error:", e);
-            return [];
         }
     }
-    // 若無快取，則進行一次同步
-    const freshData = await performGlobalSync();
-    return Object.values(freshData.stocks);
+
+    // 如果快取不存在或讀取失敗，同步創建（首次啟動）
+    console.log("[Cache] No cache found, creating...");
+    await performGlobalSync();
+
+    if (fs.existsSync(CACHE_PATH)) {
+        const data = JSON.parse(fs.readFileSync(CACHE_PATH, "utf8"));
+        return data.stocks ? Object.values(data.stocks) : [];
+    }
+
+    return [];
 }
 
 /**
