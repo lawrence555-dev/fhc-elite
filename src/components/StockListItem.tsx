@@ -24,7 +24,7 @@ export default function StockListItem({
     const chartData = data && data.length > 0 ? data.filter(d => d.value !== null) : [];
 
     return (
-        <div className="glass border-b border-white/5 last:border-b-0 py-3 px-4 flex items-center gap-3 hover:bg-white/3 transition-all duration-200">
+        <div className="glass border-b border-white/5 last:border-b-0 py-3 px-4 flex items-center gap-3 hover:bg-white/3 transition-all duration-200 outline-none focus:outline-none">
             {/* Left: Stock Code & Name */}
             <div className="flex items-center gap-2 min-w-[140px]">
                 <div>
