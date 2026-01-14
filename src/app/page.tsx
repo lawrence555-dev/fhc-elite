@@ -64,6 +64,17 @@ export default function DashboardPage() {
     return matchesSearch && matchesFilter;
   });
 
+  // Handle stock click with scroll to top in grid mode
+  const handleStockClick = (stockId: string) => {
+    const newSelectedId = stockId === selectedId ? null : stockId;
+    setSelectedId(newSelectedId);
+
+    // Scroll to top when selecting a stock in grid mode to show detail panel
+    if (newSelectedId && viewMode === 'grid') {
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+  };
+
   useEffect(() => {
     setMounted(true);
 
@@ -395,7 +406,7 @@ export default function DashboardPage() {
                   selectedId ? "grid-cols-1 md:grid-cols-2 lg:grid-cols-3" : "grid-cols-1 md:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4"
                 )}>
                   {filteredStocks.map((stock) => (
-                    <div key={stock.id} onClick={() => setSelectedId(stock.id === selectedId ? null : stock.id)} className="cursor-pointer">
+                    <div key={stock.id} onClick={() => handleStockClick(stock.id)} className="cursor-pointer">
                       <FhcCard
                         {...stock}
                         pbPercentile={stock.pbPercentile}
@@ -407,7 +418,7 @@ export default function DashboardPage() {
                 // List Mode
                 <div className="flex flex-col gap-4">
                   {filteredStocks.map((stock) => (
-                    <div key={stock.id} onClick={() => setSelectedId(stock.id === selectedId ? null : stock.id)} className="cursor-pointer">
+                    <div key={stock.id} onClick={() => handleStockClick(stock.id)} className="cursor-pointer">
                       <StockListItem
                         {...stock}
                         pbPercentile={stock.pbPercentile}

@@ -83,7 +83,7 @@ export default function FhcCard({
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             className={cn(
-                "glass group relative overflow-hidden p-5 transition-all duration-500",
+                "glass group relative overflow-hidden p-5 transition-all duration-500 outline-none focus:outline-none",
                 isCheap && "after:absolute after:inset-0 after:rounded-[1rem] after:border-2 after:border-fall/30 after:animate-pulse"
             )}
         >
