@@ -138,7 +138,7 @@ export default function DashboardPage() {
       setStocks(prev => [...prev]);
     }, 60000);
 
-    // 收盤後額外同步 (13:32 執行一次) - 確保獲取完整收盤數據
+    // 收盤後額外同步 (13:35 執行一次) - 確保獲取完整收盤數據
     const checkPostMarketSync = () => {
       const now = new Date();
       const taipeiTime = new Intl.DateTimeFormat('en-US', {
@@ -148,8 +148,8 @@ export default function DashboardPage() {
         timeZone: 'Asia/Taipei'
       }).format(now);
 
-      // 在 13:32 執行一次額外同步
-      if (taipeiTime === '13:32') {
+      // 在 13:35 執行一次額外同步
+      if (taipeiTime === '13:35') {
         console.log('[Post-Market Sync] Fetching final closing data...');
         fetchIntradayHistory();
       }
