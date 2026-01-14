@@ -102,14 +102,14 @@ export default function ValuationPage() {
                                             className={cn(
                                                 "aspect-square rounded-2xl flex flex-col items-center justify-center cursor-pointer transition-all duration-500 border border-white/10 group relative",
                                                 getHeatmapColor(stock.pbPercentile),
-                                                selectedStock.id === stock.id ? "ring-4 ring-white/20 scale-105" : ""
+                                                selectedStock?.id === stock.id ? "ring-4 ring-white/20 scale-105" : ""
                                             )}
                                         >
                                             <span className="text-[10px] font-black text-white/40 mb-1 group-hover:text-white/80">{stock.id}</span>
                                             <span className="text-sm font-black text-white">{stock.name}</span>
                                             <span className="text-[10px] font-mono font-bold text-white/60 mt-1">{stock.pbPercentile}%</span>
 
-                                            {selectedStock.id === stock.id && (
+                                            {selectedStock?.id === stock.id && (
                                                 <div className="absolute -bottom-2 w-1.5 h-1.5 bg-white rounded-full" />
                                             )}
                                         </motion.div>
@@ -151,86 +151,92 @@ export default function ValuationPage() {
 
                     {/* Right Column: Detail Panel */}
                     <div className="lg:col-span-4 flex flex-col gap-6">
-                        <div className="glass p-8 border-rise/20 bg-gradient-to-b from-slate-900 to-slate-900/50 sticky top-8">
-                            <div className="flex justify-between items-center mb-8">
-                                <h2 className="text-2xl font-black text-white tracking-widest">{selectedStock.name} <span className="text-slate-600 font-mono text-lg">{selectedStock.id}</span></h2>
-                                <ExternalLink size={18} className="text-slate-600 hover:text-white cursor-pointer" />
-                            </div>
-
-                            <div className="space-y-8">
-                                <div className="flex justify-between items-end">
-                                    <div>
-                                        <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1">目前價值位階</p>
-                                        <p className={cn("text-3xl font-black tracking-tighter transition-colors duration-500", getValuationLabel(selectedStock.pbPercentile).color)}>
-                                            {getValuationLabel(selectedStock.pbPercentile).text}
-                                        </p>
-                                    </div>
-                                    <div className="text-right">
-                                        <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1">歷史分位點</p>
-                                        <p className="text-3xl font-black font-mono text-white tracking-tighter">{selectedStock.pbPercentile}%</p>
-                                    </div>
+                        {selectedStock ? (
+                            <div className="glass p-8 border-rise/20 bg-gradient-to-b from-slate-900 to-slate-900/50 sticky top-8">
+                                <div className="flex justify-between items-center mb-8">
+                                    <h2 className="text-2xl font-black text-white tracking-widest">{selectedStock.name} <span className="text-slate-600 font-mono text-lg">{selectedStock.id}</span></h2>
+                                    <ExternalLink size={18} className="text-slate-600 hover:text-white cursor-pointer" />
                                 </div>
 
-                                <div className="space-y-4">
-                                    <div className="flex justify-between items-center text-xs font-bold mb-2">
-                                        <span className="text-slate-500">當前股價</span>
-                                        <span className="text-white font-mono">{selectedStock.price} TWD</span>
-                                    </div>
-                                    <div className="w-full h-1.5 bg-slate-800 rounded-full overflow-hidden flex">
-                                        <div className="bg-emerald-500" style={{ width: '25%' }} />
-                                        <div className="bg-slate-700" style={{ width: '50%' }} />
-                                        <div className="bg-rose-500" style={{ width: '25%' }} />
-                                        <motion.div
-                                            initial={{ left: 0 }}
-                                            animate={{ left: `${selectedStock.pbPercentile}%` }}
-                                            className="absolute w-3 h-3 bg-white border-2 border-slate-900 rounded-full -translate-x-1/2 -mt-[3px] shadow-lg shadow-white/20 transition-all duration-700"
-                                        />
-                                    </div>
-                                </div>
-
-                                <div className="p-6 bg-slate-800/30 rounded-2xl border border-white/5 space-y-4">
-                                    <div className="flex items-start gap-4">
-                                        <div className="p-2 bg-emerald-500/10 rounded-lg text-emerald-500">
-                                            <TrendingDown size={20} />
-                                        </div>
+                                <div className="space-y-8">
+                                    <div className="flex justify-between items-end">
                                         <div>
-                                            <p className="text-[11px] font-black text-slate-400 uppercase tracking-widest mb-1">安全邊際 (Margin of Safety)</p>
-                                            <p className="text-sm font-bold text-slate-100">目前價格低於 5 年平均線 8.5%，適合長期分批佈局。</p>
+                                            <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1">目前價值位階</p>
+                                            <p className={cn("text-3xl font-black tracking-tighter transition-colors duration-500", getValuationLabel(selectedStock.pbPercentile).color)}>
+                                                {getValuationLabel(selectedStock.pbPercentile).text}
+                                            </p>
+                                        </div>
+                                        <div className="text-right">
+                                            <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1">歷史分位點</p>
+                                            <p className="text-3xl font-black font-mono text-white tracking-tighter">{selectedStock.pbPercentile}%</p>
                                         </div>
                                     </div>
-                                    <div className="flex items-start gap-4">
-                                        <div className="p-2 bg-blue-500/10 rounded-lg text-blue-500">
-                                            <TrendingUp size={20} />
+
+                                    <div className="space-y-4">
+                                        <div className="flex justify-between items-center text-xs font-bold mb-2">
+                                            <span className="text-slate-500">當前股價</span>
+                                            <span className="text-white font-mono">{selectedStock.price} TWD</span>
                                         </div>
-                                        <div>
-                                            <p className="text-[11px] font-black text-slate-400 uppercase tracking-widest mb-1">籌碼慣性</p>
-                                            <p className="text-sm font-bold text-slate-100">官股行庫近三日連續承接，顯示政策性底部信號。</p>
+                                        <div className="w-full h-1.5 bg-slate-800 rounded-full overflow-hidden flex">
+                                            <div className="bg-emerald-500" style={{ width: '25%' }} />
+                                            <div className="bg-slate-700" style={{ width: '50%' }} />
+                                            <div className="bg-rose-500" style={{ width: '25%' }} />
+                                            <motion.div
+                                                initial={{ left: 0 }}
+                                                animate={{ left: `${selectedStock.pbPercentile}%` }}
+                                                className="absolute w-3 h-3 bg-white border-2 border-slate-900 rounded-full -translate-x-1/2 -mt-[3px] shadow-lg shadow-white/20 transition-all duration-700"
+                                            />
                                         </div>
                                     </div>
-                                </div>
-                                <div className="flex gap-4">
-                                    <Link href={`/report/${selectedStock?.id}`} className="flex-1">
-                                        <button className="w-full py-4 bg-rise text-white rounded-xl font-black shadow-lg shadow-rise/20 hover:scale-[1.02] active:scale-95 transition-all text-xs">
-                                            查看深度分析報告
+
+                                    <div className="p-6 bg-slate-800/30 rounded-2xl border border-white/5 space-y-4">
+                                        <div className="flex items-start gap-4">
+                                            <div className="p-2 bg-emerald-500/10 rounded-lg text-emerald-500">
+                                                <TrendingDown size={20} />
+                                            </div>
+                                            <div>
+                                                <p className="text-[11px] font-black text-slate-400 uppercase tracking-widest mb-1">安全邊際 (Margin of Safety)</p>
+                                                <p className="text-sm font-bold text-slate-100">目前價格低於 5 年平均線 8.5%,適合長期分批佈局。</p>
+                                            </div>
+                                        </div>
+                                        <div className="flex items-start gap-4">
+                                            <div className="p-2 bg-blue-500/10 rounded-lg text-blue-500">
+                                                <TrendingUp size={20} />
+                                            </div>
+                                            <div>
+                                                <p className="text-[11px] font-black text-slate-400 uppercase tracking-widest mb-1">籌碼慣性</p>
+                                                <p className="text-sm font-bold text-slate-100">官股行庫近三日連續承接,顯示政策性底部信號。</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div className="flex gap-4">
+                                        <Link href={`/report/${selectedStock.id}`} className="flex-1">
+                                            <button className="w-full py-4 bg-rise text-white rounded-xl font-black shadow-lg shadow-rise/20 hover:scale-[1.02] active:scale-95 transition-all text-xs">
+                                                查看深度分析報告
+                                            </button>
+                                        </Link>
+                                        <button
+                                            onClick={() => window.open(`https://tw.stock.yahoo.com/quote/${selectedStock.id}.TW`, "_blank")}
+                                            className="p-4 bg-white/5 border border-white/10 rounded-xl text-slate-400 hover:text-white transition-all"
+                                        >
+                                            <ExternalLink size={20} />
+                                        </button>
+                                    </div>
+                                    <Link href={`/report/${selectedStock.id}`} className="w-full">
+                                        <button className="w-full py-4 bg-rise hover:bg-rose-600 text-white rounded-2xl font-black shadow-xl shadow-rise/20 transition-all active:scale-95 group overflow-hidden relative">
+                                            <span className="relative z-10 flex items-center justify-center gap-2">
+                                                深入籌碼追蹤 <ExternalLink size={16} />
+                                            </span>
+                                            <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000" />
                                         </button>
                                     </Link>
-                                    <button
-                                        onClick={() => window.open(`https://tw.stock.yahoo.com/quote/${selectedStock.id}.TW`, "_blank")}
-                                        className="p-4 bg-white/5 border border-white/10 rounded-xl text-slate-400 hover:text-white transition-all"
-                                    >
-                                        <ExternalLink size={20} />
-                                    </button>
                                 </div>
-                                <Link href={`/report/${selectedStock?.id}`} className="w-full">
-                                    <button className="w-full py-4 bg-rise hover:bg-rose-600 text-white rounded-2xl font-black shadow-xl shadow-rise/20 transition-all active:scale-95 group overflow-hidden relative">
-                                        <span className="relative z-10 flex items-center justify-center gap-2">
-                                            深入籌碼追蹤 <ExternalLink size={16} />
-                                        </span>
-                                        <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000" />
-                                    </button>
-                                </Link>
                             </div>
-                        </div>
+                        ) : (
+                            <div className="glass p-8 border-white/5 bg-slate-900/40 flex items-center justify-center min-h-[400px]">
+                                <p className="text-slate-400">載入中...</p>
+                            </div>
+                        )}
                     </div>
                 </main>
             </div>
