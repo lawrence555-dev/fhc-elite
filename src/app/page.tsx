@@ -459,7 +459,7 @@ export default function DashboardPage() {
                   initial={{ opacity: 0, x: 50 }}
                   animate={{ opacity: 1, x: 0 }}
                   exit={{ opacity: 0, x: 50 }}
-                  className="xl:col-span-4 glass border-white/10 bg-slate-900/60 p-8 flex flex-col gap-8 sticky top-24 h-[calc(100vh-160px)]"
+                  className="xl:col-span-4 glass border-white/10 bg-slate-900/60 p-8 flex flex-col gap-8"
                 >
                   <div className="flex justify-between items-start">
                     <div>
