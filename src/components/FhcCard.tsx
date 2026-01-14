@@ -25,7 +25,7 @@ export default function FhcCard({
     // Breathing light effect for low valuation (cheap Zone)
     const isCheap = pbPercentile < 15;
 
-    // Prepare chart data: show full trading session (9:00-13:30) with data up to current time
+    // Create complete time series from 9:00 to 13:30 with data up to current time
     const chartData = useMemo(() => {
         if (!data || data.length === 0) return [];
 
@@ -38,34 +38,39 @@ export default function FhcCard({
             timeZone: 'Asia/Taipei'
         }).format(now);
 
-        // Convert current time to minutes since midnight
         const [currentHour, currentMinute] = taipeiTime.split(':').map(Number);
         const currentMinutes = currentHour * 60 + currentMinute;
 
-        // Trading hours: 9:00 (540 min) to 13:30 (810 min)
-        const tradingStart = 9 * 60; // 540
-        const tradingEnd = 13 * 60 + 30; // 810
-
-        // Filter actual data within trading hours
-        const tradingData = data.filter(point => {
-            if (!point.time) return false;
-            const [hour, minute] = point.time.split(':').map(Number);
-            const pointMinutes = hour * 60 + minute;
-            return pointMinutes >= tradingStart && pointMinutes <= tradingEnd;
+        // Create a map of existing data points
+        const dataMap = new Map<string, number>();
+        data.forEach(point => {
+            if (point.time) {
+                dataMap.set(point.time, point.value);
+            }
         });
 
-        // Create complete data with null values for future times
-        const completeData = tradingData.map(point => {
-            const [hour, minute] = point.time!.split(':').map(Number);
-            const pointMinutes = hour * 60 + minute;
+        // Generate complete time series from 9:00 to 13:30 (every 5 minutes)
+        const completeTimeSeries: { time: string; value: number | null }[] = [];
+        const tradingStart = 9 * 60; // 9:00 = 540 minutes
+        const tradingEnd = 13 * 60 + 30; // 13:30 = 810 minutes
 
-            return {
-                time: point.time,
-                value: pointMinutes <= currentMinutes ? point.value : null
-            };
-        });
+        for (let minutes = tradingStart; minutes <= tradingEnd; minutes += 5) {
+            const hour = Math.floor(minutes / 60);
+            const minute = minutes % 60;
+            const timeStr = `${hour.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')}`;
 
-        return completeData;
+            // If this time is in the future, set value to null
+            // If this time has data, use it; otherwise interpolate or set to null
+            let value: number | null = null;
+
+            if (minutes <= currentMinutes) {
+                value = dataMap.get(timeStr) ?? null;
+            }
+
+            completeTimeSeries.push({ time: timeStr, value });
+        }
+
+        return completeTimeSeries;
     }, [data]);
 
     return (
@@ -123,8 +128,7 @@ export default function FhcCard({
                                 tick={{ fill: '#475569', fontSize: 9, fontWeight: 'bold' }}
                                 tickLine={false}
                                 axisLine={{ stroke: 'rgba(255,255,255,0.05)' }}
-                                interval="preserveStartEnd"
-                                domain={['09:00', '13:30']}
+                                ticks={['09:00', '11:00', '13:30']}
                             />
                             <YAxis hide domain={['dataMin - 0.2', 'dataMax + 0.2']} />
                             <Tooltip
