@@ -1,28 +1,13 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import Link from "next/link";
 import Sidebar from "@/components/Sidebar";
 import TickerTape from "@/components/TickerTape";
 import { Info, ExternalLink, TrendingDown, TrendingUp } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { motion } from "framer-motion";
 import { useToast } from "@/components/Toast";
-
-const STOCKS = [
-    { id: "2881", name: "富邦金", price: 95.5, pbPercentile: 82 },
-    { id: "2882", name: "國泰金", price: 75.9, pbPercentile: 55 },
-    { id: "2886", name: "兆豐金", price: 40.65, pbPercentile: 91 },
-    { id: "2891", name: "中信金", price: 49.7, pbPercentile: 85 },
-    { id: "2880", name: "華南金", price: 31.85, pbPercentile: 75 },
-    { id: "2884", name: "玉山金", price: 32.85, pbPercentile: 15 },
-    { id: "2892", name: "第一金", price: 29.7, pbPercentile: 65 },
-    { id: "2885", name: "元大金", price: 40.8, pbPercentile: 58 },
-    { id: "2887", name: "台新新光金", price: 20.85, pbPercentile: 8 },
-    { id: "2890", name: "永豐金", price: 29.2, pbPercentile: 45 },
-    { id: "2883", name: "凱基金", price: 17.45, pbPercentile: 7 },
-    { id: "2889", name: "國票金", price: 16.75, pbPercentile: 35 },
-    { id: "5880", name: "合庫金", price: 24.1, pbPercentile: 74 },
-];
 
 const getHeatmapColor = (percentile: number) => {
     if (percentile < 10) return "bg-emerald-500/80 shadow-[0_0_20px_rgba(16,185,129,0.3)]";
@@ -45,10 +30,30 @@ const getValuationLabel = (percentile: number) => {
 export default function ValuationPage() {
     const { showToast } = useToast();
     const [mounted, setMounted] = useState(false);
-    const [selectedStock, setSelectedStock] = useState(STOCKS[0]);
+    const [stocks, setStocks] = useState<any[]>([]);
+    const [selectedStock, setSelectedStock] = useState<any>(null);
+    const [loading, setLoading] = useState(true);
 
     useEffect(() => {
         setMounted(true);
+
+        // 從真實 API 獲取數據
+        const fetchStocks = async () => {
+            try {
+                const res = await fetch("/api/stock-prices/realtime");
+                const data = await res.json();
+                if (Array.isArray(data) && data.length > 0) {
+                    setStocks(data);
+                    setSelectedStock(data[0]);
+                }
+            } catch (e) {
+                console.error("Failed to fetch stocks:", e);
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        fetchStocks();
     }, []);
 
     return (
@@ -86,44 +91,60 @@ export default function ValuationPage() {
                             </div>
 
                             <div className="grid grid-cols-4 sm:grid-cols-5 md:grid-cols-7 gap-4 w-full max-w-3xl">
-                                {STOCKS.sort((a, b) => a.pbPercentile - b.pbPercentile).map((stock) => (
-                                    <motion.div
-                                        key={stock.id}
-                                        whileHover={{ scale: 1.05, zIndex: 10 }}
-                                        onClick={() => setSelectedStock(stock)}
-                                        className={cn(
-                                            "aspect-square rounded-2xl flex flex-col items-center justify-center cursor-pointer transition-all duration-500 border border-white/10 group relative",
-                                            getHeatmapColor(stock.pbPercentile),
-                                            selectedStock.id === stock.id ? "ring-4 ring-white/20 scale-105" : ""
-                                        )}
-                                    >
-                                        <span className="text-[10px] font-black text-white/40 mb-1 group-hover:text-white/80">{stock.id}</span>
-                                        <span className="text-sm font-black text-white">{stock.name}</span>
-                                        <span className="text-[10px] font-mono font-bold text-white/60 mt-1">{stock.pbPercentile}%</span>
+                                {loading ? (
+                                    <div className="col-span-full text-center text-slate-400 py-8">載入中...</div>
+                                ) : (
+                                    stocks.sort((a: any, b: any) => a.pbPercentile - b.pbPercentile).map((stock: any) => (
+                                        <motion.div
+                                            key={stock.id}
+                                            whileHover={{ scale: 1.05, zIndex: 10 }}
+                                            onClick={() => setSelectedStock(stock)}
+                                            className={cn(
+                                                "aspect-square rounded-2xl flex flex-col items-center justify-center cursor-pointer transition-all duration-500 border border-white/10 group relative",
+                                                getHeatmapColor(stock.pbPercentile),
+                                                selectedStock.id === stock.id ? "ring-4 ring-white/20 scale-105" : ""
+                                            )}
+                                        >
+                                            <span className="text-[10px] font-black text-white/40 mb-1 group-hover:text-white/80">{stock.id}</span>
+                                            <span className="text-sm font-black text-white">{stock.name}</span>
+                                            <span className="text-[10px] font-mono font-bold text-white/60 mt-1">{stock.pbPercentile}%</span>
 
-                                        {selectedStock.id === stock.id && (
-                                            <div className="absolute -bottom-2 w-1.5 h-1.5 bg-white rounded-full" />
-                                        )}
-                                    </motion.div>
-                                ))}
+                                            {selectedStock.id === stock.id && (
+                                                <div className="absolute -bottom-2 w-1.5 h-1.5 bg-white rounded-full" />
+                                            )}
+                                        </motion.div>
+                                    ))
+                                )}
                             </div>
                         </div>
 
                         <div className="grid grid-cols-3 gap-6">
                             <div className="glass p-5 flex flex-col items-center text-center">
                                 <span className="text-[10px] font-black text-emerald-500 uppercase tracking-widest mb-2">最被低估</span>
-                                <span className="text-xl font-black text-white">凱基金 (2883)</span>
-                                <span className="text-xs font-bold text-slate-400 mt-1">位階 7%</span>
+                                <span className="text-xl font-black text-white">
+                                    {stocks.length > 0 ? `${stocks.sort((a: any, b: any) => a.pbPercentile - b.pbPercentile)[0]?.name} (${stocks[0]?.id})` : '---'}
+                                </span>
+                                <span className="text-xs font-bold text-slate-400 mt-1">
+                                    位階 {stocks.length > 0 ? stocks[0]?.pbPercentile : 0}%
+                                </span>
                             </div>
                             <div className="glass p-5 flex flex-col items-center text-center">
                                 <span className="text-[10px] font-black text-rose-500 uppercase tracking-widest mb-2">最被高估</span>
-                                <span className="text-xl font-black text-white">兆豐金 (2886)</span>
-                                <span className="text-xs font-bold text-slate-400 mt-1">位階 91%</span>
+                                <span className="text-xl font-black text-white">
+                                    {stocks.length > 0 ? `${stocks.sort((a: any, b: any) => b.pbPercentile - a.pbPercentile)[0]?.name} (${stocks.sort((a: any, b: any) => b.pbPercentile - a.pbPercentile)[0]?.id})` : '---'}
+                                </span>
+                                <span className="text-xs font-bold text-slate-400 mt-1">
+                                    位階 {stocks.length > 0 ? stocks.sort((a: any, b: any) => b.pbPercentile - a.pbPercentile)[0]?.pbPercentile : 0}%
+                                </span>
                             </div>
                             <div className="glass p-5 flex flex-col items-center text-center">
-                                <span className="text-[10px] font-black text-blue-500 uppercase tracking-widest mb-2">外資最愛</span>
-                                <span className="text-xl font-black text-white">富邦金 (2881)</span>
-                                <span className="text-xs font-bold text-slate-400 mt-1">近 5 日買超 1.2 萬張</span>
+                                <span className="text-[10px] font-black text-blue-500 uppercase tracking-widest mb-2">價格最高</span>
+                                <span className="text-xl font-black text-white">
+                                    {stocks.length > 0 ? `${stocks.sort((a: any, b: any) => b.price - a.price)[0]?.name} (${stocks.sort((a: any, b: any) => b.price - a.price)[0]?.id})` : '---'}
+                                </span>
+                                <span className="text-xs font-bold text-slate-400 mt-1">
+                                    NT$ {stocks.length > 0 ? stocks.sort((a: any, b: any) => b.price - a.price)[0]?.price?.toFixed(2) : '0.00'}
+                                </span>
                             </div>
                         </div>
                     </div>
@@ -188,12 +209,11 @@ export default function ValuationPage() {
                                     </div>
                                 </div>
                                 <div className="flex gap-4">
-                                    <button
-                                        onClick={() => showToast("正向歷史數據比對中... 此分析基於 5 年 P/B 分位。", "info")}
-                                        className="flex-1 py-4 bg-rise text-white rounded-xl font-black shadow-lg shadow-rise/20 hover:scale-[1.02] active:scale-95 transition-all text-xs"
-                                    >
-                                        查看深度分析報告
-                                    </button>
+                                    <Link href={`/report/${selectedStock?.id}`} className="flex-1">
+                                        <button className="w-full py-4 bg-rise text-white rounded-xl font-black shadow-lg shadow-rise/20 hover:scale-[1.02] active:scale-95 transition-all text-xs">
+                                            查看深度分析報告
+                                        </button>
+                                    </Link>
                                     <button
                                         onClick={() => window.open(`https://tw.stock.yahoo.com/quote/${selectedStock.id}.TW`, "_blank")}
                                         className="p-4 bg-white/5 border border-white/10 rounded-xl text-slate-400 hover:text-white transition-all"
@@ -201,12 +221,14 @@ export default function ValuationPage() {
                                         <ExternalLink size={20} />
                                     </button>
                                 </div>
-                                <button className="w-full py-4 bg-rise hover:bg-rose-600 text-white rounded-2xl font-black shadow-xl shadow-rise/20 transition-all active:scale-95 group overflow-hidden relative">
-                                    <span className="relative z-10 flex items-center justify-center gap-2">
-                                        深入籌碼追蹤 <ExternalLink size={16} />
-                                    </span>
-                                    <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000" />
-                                </button>
+                                <Link href={`/report/${selectedStock?.id}`} className="w-full">
+                                    <button className="w-full py-4 bg-rise hover:bg-rose-600 text-white rounded-2xl font-black shadow-xl shadow-rise/20 transition-all active:scale-95 group overflow-hidden relative">
+                                        <span className="relative z-10 flex items-center justify-center gap-2">
+                                            深入籌碼追蹤 <ExternalLink size={16} />
+                                        </span>
+                                        <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000" />
+                                    </button>
+                                </Link>
                             </div>
                         </div>
                     </div>
